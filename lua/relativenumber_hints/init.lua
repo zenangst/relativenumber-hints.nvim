@@ -8,6 +8,7 @@ local HLGROUP = "RelativeNumberHint"
 
 vim.api.nvim_set_hl(0, HLGROUP, { fg = "#ff0000", bold = true })
 vim.fn.sign_define(SIGN_NAME, {
+	text = "",
 	numhl = HLGROUP,
 })
 
