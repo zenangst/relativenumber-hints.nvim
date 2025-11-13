@@ -94,22 +94,8 @@ local function on_motion_visual(m)
 	local count = tonumber(pending) or 0
 	clear()
 
-	local mode = vim.fn.mode()
-
-	local reenter
-	if mode == "v" then
-		reenter = "v"
-	elseif mode == "V" then
-		reenter = "V"
-	elseif mode == "\22" then
-		reenter = "\22"
-	else
-		reenter = "v"
-	end
-
-	local keys = string.format("<Esc>%s%d%s", reenter, count, m)
-
-	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "n", false)
+	local keys = string.format("%d%s", count, m)
+	vim.api.nvim_feedkeys(keys, "n", false)
 
 	return "<Ignore>"
 end
