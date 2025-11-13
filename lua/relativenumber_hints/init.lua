@@ -53,7 +53,15 @@ end
 
 local function on_digit(d)
 	local mode = vim.fn.mode()
-	if mode ~= "n" and mode ~= "v" and mode ~= "V" and mode ~= "\22" then
+	if
+		mode ~= "n"
+		and mode ~= "v"
+		and mode ~= "V"
+		and mode ~= "\22"
+		and mode ~= "no"
+		and mode ~= "noV"
+		and mode ~= "no\22"
+	then
 		return d
 	end
 
@@ -106,6 +114,21 @@ local function on_motion_visual(m)
 	return "<Ignore>"
 end
 
+local function on_motion_operator(m)
+	if pending == "" then
+		return m
+	end
+
+	local count = tonumber(pending) or 0
+	clear()
+
+	local keys = string.format("%d%s", count, m)
+
+	vim.api.nvim_feedkeys(keys, "n", false)
+
+	return "<Ignore>"
+end
+
 function M.setup(opts)
 	opts = opts or {}
 
@@ -118,8 +141,10 @@ function M.setup(opts)
 		vim.keymap.set("n", d, function()
 			return on_digit(d)
 		end, { expr = true, noremap = true })
-
 		vim.keymap.set("v", d, function()
+			return on_digit(d)
+		end, { expr = true, noremap = true })
+		vim.keymap.set("o", d, function()
 			return on_digit(d)
 		end, { expr = true, noremap = true })
 	end
@@ -132,6 +157,10 @@ function M.setup(opts)
 
 		vim.keymap.set("v", m, function()
 			return on_motion_visual(m)
+		end, { expr = true, noremap = true })
+
+		vim.keymap.set("o", m, function()
+			return on_motion_operator(m)
 		end, { expr = true, noremap = true })
 	end
 
