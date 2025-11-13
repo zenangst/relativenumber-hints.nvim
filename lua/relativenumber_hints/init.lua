@@ -150,14 +150,21 @@ function M.setup(opts)
 		end, { expr = true, noremap = true })
 	end
 
-	vim.keymap.set({ "n", "v" }, "<Esc>", function()
-		clear()
-		return "<Esc>"
-	end, { expr = true })
-
 	vim.keymap.set({ "n", "v" }, "<C-c>", function()
 		clear()
 		return "<C-c>"
+	end, { expr = true })
+
+	vim.keymap.set({ "n", "v" }, "<Esc>", function()
+		if pending ~= "" then
+			clear()
+			return ""
+		end
+		if _G._original_esc_handler then
+			_G._original_esc_handler()
+			return ""
+		end
+		return "<Esc>"
 	end, { expr = true })
 end
 
