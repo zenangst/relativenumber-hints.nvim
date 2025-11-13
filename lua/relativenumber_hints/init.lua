@@ -51,12 +51,12 @@ local function apply()
 end
 
 local function on_digit(d)
-	if vim.fn.mode() ~= "n" then
+	local mode = vim.fn.mode()
+	if mode ~= "n" and mode ~= "v" and mode ~= "V" and mode ~= "\22" then
 		return d
 	end
 
 	pending = pending .. d
-
 	apply()
 
 	return "<Ignore>"
@@ -77,6 +77,34 @@ local function on_motion(m)
 	return "<Ignore>"
 end
 
+local function on_motion_visual(m)
+	if pending == "" then
+		return m
+	end
+
+	local count = tonumber(pending) or 0
+	clear()
+
+	local mode = vim.fn.mode()
+
+	local reenter
+	if mode == "v" then
+		reenter = "v"
+	elseif mode == "V" then
+		reenter = "V"
+	elseif mode == "\22" then
+		reenter = "\22"
+	else
+		reenter = "v"
+	end
+
+	local keys = string.format("<Esc>%s%d%s", reenter, count, m)
+
+	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "n", false)
+
+	return "<Ignore>"
+end
+
 function M.setup(opts)
 	opts = opts or {}
 
@@ -89,6 +117,10 @@ function M.setup(opts)
 		vim.keymap.set("n", d, function()
 			return on_digit(d)
 		end, { expr = true, noremap = true })
+
+		vim.keymap.set("v", d, function()
+			return on_digit(d)
+		end, { expr = true, noremap = true })
 	end
 
 	local motions = opts.motions or { "j", "k" }
@@ -96,11 +128,20 @@ function M.setup(opts)
 		vim.keymap.set("n", m, function()
 			return on_motion(m)
 		end, { expr = true, noremap = true, replace_keycodes = true })
+
+		vim.keymap.set("v", m, function()
+			return on_motion_visual(m)
+		end, { expr = true, noremap = true })
 	end
 
-	vim.keymap.set("n", "<Esc>", function()
+	vim.keymap.set({ "n", "v" }, "<Esc>", function()
 		clear()
 		return "<Esc>"
+	end, { expr = true })
+
+	vim.keymap.set({ "n", "v" }, "<C-c>", function()
+		clear()
+		return "<C-c>"
 	end, { expr = true })
 end
 
