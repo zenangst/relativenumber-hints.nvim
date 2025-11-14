@@ -150,10 +150,13 @@ function M.setup(opts)
 		end, { expr = true, noremap = true })
 	end
 
-	vim.keymap.set({ "n", "v" }, "<C-c>", function()
-		clear()
-		return "<C-c>"
-	end, { expr = true })
+	local existing = vim.fn.maparg("<C-c>", "n")
+	if existing == "" then
+		vim.keymap.set({ "n", "v" }, "<C-c>", function()
+			clear()
+			return "<C-c>"
+		end, { expr = true })
+	end
 
 	vim.keymap.set({ "n", "v" }, "<Esc>", function()
 		if pending ~= "" then
