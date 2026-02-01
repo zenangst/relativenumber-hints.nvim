@@ -1,5 +1,11 @@
 local M = {}
 
+local defaults = {
+	highlight = nil,
+	motions = { "j", "k", "h", "l", "g" },
+	center_motion_threshold = 15,
+}
+
 local pending = ""
 
 local SIGN_GROUP = "RelativeNumberHints"
@@ -71,7 +77,7 @@ local function on_digit(d)
 	return "<Ignore>"
 end
 
-local function on_motion(m)
+local function on_motion(opts, m)
 	if pending == "" then
 		return m
 	end
@@ -82,6 +88,11 @@ local function on_motion(m)
 	local keys = string.format("%d%s", count, m)
 
 	vim.api.nvim_feedkeys(keys, "n", false)
+	if count >= opts.center_motion_threshold then
+		vim.schedule(function()
+			vim.cmd("normal! zz")
+		end)
+	end
 
 	return "<Ignore>"
 end
@@ -116,7 +127,7 @@ local function on_motion_operator(m)
 end
 
 function M.setup(opts)
-	opts = opts or {}
+	opts = vim.tbl_deep_extend("force", defaults, opts or {})
 
 	if opts.highlight then
 		vim.api.nvim_set_hl(0, HLGROUP, opts.highlight)
@@ -135,10 +146,19 @@ function M.setup(opts)
 		end, { expr = true, noremap = true })
 	end
 
-	local motions = opts.motions or { "j", "k" }
+	vim.keymap.set("n", "gg", function()
+		if pending ~= "" then
+			local count = tonumber(pending)
+			clear()
+			return tostring(count) .. "gg"
+		end
+		return "gg"
+	end, { expr = true, noremap = true })
+
+	local motions = opts.motions or { "j", "k", "h", "l", "g" }
 	for _, m in ipairs(motions) do
 		vim.keymap.set("n", m, function()
-			return on_motion(m)
+			return on_motion(opts, m)
 		end, { expr = true, noremap = true, replace_keycodes = true })
 
 		vim.keymap.set("v", m, function()
