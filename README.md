@@ -23,6 +23,9 @@ This plugin highlights the two lines you’ll land on, making things clearer and
 
 ```lua
 require("relativenumber_hints").setup({
-  highlight = { fg = "#ffcc00", bold = true }
+  highlight = { fg = "#ffcc00", bold = true },
+  add_to_jumplist = true,
 })
 ```
+
+`add_to_jumplist = true` stores counted motions triggered through the plugin in Vim's jumplist, so you can jump back with `<C-o>`.

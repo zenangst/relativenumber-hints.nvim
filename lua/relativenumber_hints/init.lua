@@ -4,6 +4,7 @@ local defaults = {
 	highlight = nil,
 	motions = { "j", "k", "h", "l", "g" },
 	center_motion_threshold = 15,
+	add_to_jumplist = false,
 }
 
 local pending = ""
@@ -26,6 +27,18 @@ end
 
 local function highlight_line(buf, row0)
 	vim.fn.sign_place(0, SIGN_GROUP, SIGN_NAME, buf, { lnum = row0 + 1, priority = 10000 })
+end
+
+local function execute_motion(keys, center_after)
+	vim.schedule(function()
+		local command = keys
+		if center_after then
+			command = command .. "zz"
+		end
+
+		vim.cmd("normal! m'")
+		vim.cmd("normal! " .. command)
+	end)
 end
 
 local function apply()
@@ -87,11 +100,15 @@ local function on_motion(opts, m)
 
 	local keys = string.format("%d%s", count, m)
 
-	vim.api.nvim_feedkeys(keys, "n", false)
-	if count >= opts.center_motion_threshold then
-		vim.schedule(function()
-			vim.cmd("normal! zz")
-		end)
+	if opts.add_to_jumplist then
+		execute_motion(keys, count >= opts.center_motion_threshold)
+	else
+		vim.api.nvim_feedkeys(keys, "n", false)
+		if count >= opts.center_motion_threshold then
+			vim.schedule(function()
+				vim.cmd("normal! zz")
+			end)
+		end
 	end
 
 	return "<Ignore>"
@@ -128,6 +145,7 @@ end
 
 function M.setup(opts)
 	opts = vim.tbl_deep_extend("force", defaults, opts or {})
+	M.opts = opts
 
 	if opts.highlight then
 		vim.api.nvim_set_hl(0, HLGROUP, opts.highlight)
@@ -150,6 +168,10 @@ function M.setup(opts)
 		if pending ~= "" then
 			local count = tonumber(pending)
 			clear()
+			if opts.add_to_jumplist then
+				execute_motion(tostring(count) .. "gg")
+				return "<Ignore>"
+			end
 			return tostring(count) .. "gg"
 		end
 		return "gg"
